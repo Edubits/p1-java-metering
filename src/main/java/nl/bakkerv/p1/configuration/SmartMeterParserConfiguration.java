@@ -11,7 +11,7 @@ public class SmartMeterParserConfiguration {
 	SmartMeterDeviceConfiguration smartMeter = new SmartMeterDeviceConfiguration();
 
 	@JsonProperty
-	TimeZone timeZone;
+	TimeZone timeZone = TimeZone.getDefault();
 
 	@JsonProperty
 	Optional<String> dsmrVersionOverride = Optional.empty();

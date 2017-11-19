@@ -7,7 +7,7 @@ public enum DataBits {
 	FIVE(SerialPort.DATABITS_5),
 	SIX(SerialPort.DATABITS_6),
 	SEVEN(SerialPort.DATABITS_7),
-	EIGH(SerialPort.DATABITS_8);
+	EIGHT(SerialPort.DATABITS_8);
 
 	int bits;
 

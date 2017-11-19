@@ -1,11 +1,10 @@
 package nl.bakkerv.p1.parser;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import com.google.common.collect.Maps;
 
 public class DatagramCleaner {
 
@@ -44,7 +43,7 @@ public class DatagramCleaner {
 
 	public Map<String, String> splitDiagram(final String datagram) {
 		String[] datagramLines = this.asArray(datagram);
-		Map<String, String> lines = Maps.newHashMap();
+		Map<String, String> lines = new HashMap<>();
 
 		for (String line : datagramLines) {
 			splitLine(line).ifPresent(s -> lines.put(s.getObisCode(), s.getValueString()));

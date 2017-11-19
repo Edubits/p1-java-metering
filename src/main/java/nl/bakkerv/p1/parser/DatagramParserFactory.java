@@ -1,24 +1,18 @@
 package nl.bakkerv.p1.parser;
 
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.toSet;
+
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.TimeZone;
+import java.util.Set;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import javax.inject.Inject;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.common.collect.ImmutableListMultimap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Multimaps;
-import com.google.inject.Provider;
+import java.util.stream.Stream;
 
 import nl.bakkerv.p1.configuration.SmartMeterParserConfiguration;
 import nl.bakkerv.p1.domain.meter.Direction;
@@ -34,36 +28,32 @@ import nl.bakkerv.p1.parser.text.TimestampedValue;
 import nl.bakkerv.p1.parser.text.V4TimestampAndCubicMeterParser;
 import nl.bakkerv.p1.parser.text.ValueParser;
 import nl.bakkerv.p1.parser.text.WattValueParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DatagramParserFactory {
 
-	private static final Pattern VALUE_EXPRESSION = Pattern.compile("\\((.+)\\)");
-
-	@Inject
-	private DatagramCleaner datagramCleaner;
-
-	@Inject
-	private Provider<DatagramParser.Builder> dgBuilderProvider;
-
-	@Inject
-	private TimeZone timeZone;
-
-	@Inject
-	SmartMeterParserConfiguration smartMeterParserConfiguration;
-
 	private static final Logger logger = LoggerFactory.getLogger(DatagramParserFactory.class);
 
-	public Optional<DatagramParser> create(final String dataGram) {
-		Builder newParser = this.dgBuilderProvider.get();
-		Map<String, String> cleanedUp = this.datagramCleaner.splitDiagram(dataGram);
+	private static final Pattern VALUE_EXPRESSION = Pattern.compile("\\((.+)\\)");
+
+	private DatagramCleaner datagramCleaner = new DatagramCleaner();
+	private SmartMeterParserConfiguration smartMeterParserConfiguration;
+
+	public Optional<DatagramParser> create(final String dataGram, final SmartMeterParserConfiguration smartMeterParserConfiguration) {
+		this.smartMeterParserConfiguration = smartMeterParserConfiguration;
+
+		Builder newParser = new DatagramParser.Builder();
+		newParser.withTimeZone(smartMeterParserConfiguration.getTimeZone());
+		Map<String, String> cleanedUp = datagramCleaner.splitDiagram(dataGram);
 		Optional<String> dsmrVersion = extractField(cleanedUp, DatagramCodes.DSMR_VERSION, DSMRVersionParser::new);
 		Optional<String> meterID = extractField(cleanedUp, DatagramCodes.SMART_METER_ID, MeterIdentifierParser::new);
 		if (!meterID.isPresent()) {
 			logger.error("No meter identifier present.");
 			return Optional.empty();
 		}
-		if (this.smartMeterParserConfiguration.getDsmrVersionOverride().isPresent()) {
-			logger.info("Smart Meter version override present, using {}", this.smartMeterParserConfiguration.getDsmrVersionOverride().get());
+		if (smartMeterParserConfiguration.getDsmrVersionOverride().isPresent()) {
+			logger.info("Smart Meter version override present, using {}", smartMeterParserConfiguration.getDsmrVersionOverride().get());
 			dsmrVersion = this.smartMeterParserConfiguration.getDsmrVersionOverride();
 		}
 		if (!dsmrVersion.isPresent()) {
@@ -72,7 +62,8 @@ public class DatagramParserFactory {
 		}
 		newParser.withVersion("DSMR-" + dsmrVersion.get());
 		newParser.withMeterIdentifier(meterID.get());
-		newParser.withVendorInformation(this.datagramCleaner.asArray(dataGram)[0].substring(1));
+		newParser.withVendorInformation(datagramCleaner.asArray(dataGram)[0].substring(1));
+
 		if (cleanedUp.containsKey(DatagramCodes.ELECTRICITY_CURRENT_POWER_CONSUMPTION)) {
 			addCurrentPowerMeter(DatagramCodes.ELECTRICITY_CURRENT_POWER_CONSUMPTION, newParser, Direction.TO_CLIENT, meterID.orElse(null));
 		}
@@ -91,9 +82,16 @@ public class DatagramParserFactory {
 		if (cleanedUp.containsKey(DatagramCodes.ELECTRICITY_PRODUCTION_RATE_2)) {
 			generatekWhMeter(DatagramCodes.ELECTRICITY_PRODUCTION_RATE_2, newParser, Direction.FROM_CLIENT, 2, meterID.orElse(null));
 		}
-		ImmutableListMultimap<String, Entry<String, String>> perBusID = Multimaps.index(cleanedUp.entrySet(), s -> s.getKey().split(":")[0]);
-		ImmutableSet<String> keysToIgnore = ImmutableSet.of("1-3", "0-0", "1-0");
-		perBusID.asMap().entrySet().stream().filter(s -> !keysToIgnore.contains(s.getKey()))
+
+		Set<String> keysToIgnore = Stream.of("1-3", "0-0", "1-0").collect(toSet());
+		Map<String, Set<Entry<String, String>>> perBusID = cleanedUp.entrySet().stream()
+				.collect(groupingBy(
+						entry -> entry.getKey().split(":")[0],
+						toSet()
+				));
+
+		perBusID.entrySet().stream()
+				.filter(s -> !keysToIgnore.contains(s.getKey()))
 				.peek(s -> logger.info("Extracting for {}", s))
 				.forEach(s -> extractMeter(newParser, s.getValue()));
 
@@ -133,7 +131,7 @@ public class DatagramParserFactory {
 			}
 			if ("24.2.1".equals(code)) {
 				obisCode = e.getKey();
-				parser = new V4TimestampAndCubicMeterParser(this.timeZone);
+				parser = new V4TimestampAndCubicMeterParser(smartMeterParserConfiguration.getTimeZone());
 			}
 		}
 		if (parser != null && kind != null && identifier != null) {

@@ -3,8 +3,7 @@ package nl.bakkerv.p1.domain.meter;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
-
-import com.google.common.base.MoreObjects;
+import java.util.StringJoiner;
 
 import nl.bakkerv.p1.domain.measurement.Measurement;
 import nl.bakkerv.p1.parser.text.TimestampedValue;
@@ -89,14 +88,14 @@ public class Meter<T> {
 
 	@Override
 	public String toString() {
-		return MoreObjects.toStringHelper(this)
-				.add("identifier", this.identifier)
-				.add("kind", this.kind)
-				.add("meterType", this.meterType)
-				.add("channel", this.channel)
-				.add("tariff", this.tariff)
-				.add("unit", this.unit)
-				.add("direction", this.direction)
+		return new StringJoiner(", ", this.getClass().getSimpleName() + "[", "]")
+				.add("identifier: " + this.identifier)
+				.add("kind: " + this.kind)
+				.add("meterType: " + this.meterType)
+				.add("channel: " + this.channel)
+				.add("tariff: " + this.tariff)
+				.add("unit: " + this.unit)
+				.add("direction: " + this.direction)
 				.toString();
 	}
 

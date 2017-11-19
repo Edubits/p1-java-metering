@@ -1,11 +1,11 @@
 package nl.bakkerv.p1.domain.measurement;
 
-import com.google.common.base.MoreObjects;
-import nl.bakkerv.p1.domain.meter.Meter;
-
 import java.time.Instant;
 import java.util.Objects;
+import java.util.StringJoiner;
 import java.util.function.BiFunction;
+
+import nl.bakkerv.p1.domain.meter.Meter;
 
 public class Measurement<T> {
 
@@ -37,7 +37,11 @@ public class Measurement<T> {
 
 	@Override
 	public String toString() {
-		return MoreObjects.toStringHelper(this).add("meter", this.meter).add("timestamp", this.timestamp).add("value", this.value).toString();
+		return new StringJoiner(", ", this.getClass().getSimpleName() + "[", "]")
+				.add("meter: " + this.meter)
+				.add("timestamp: " + this.timestamp)
+				.add("value: " + this.value)
+				.toString();
 	}
 
 	@Override

@@ -3,7 +3,7 @@ package nl.bakkerv.p1.configuration;
 public enum SmartMeterPortSettings {
 
 	V3(9600, DataBits.SEVEN, Parity.EVEN, StopBits.ONE),
-	V4(115200, DataBits.EIGH, Parity.NONE, StopBits.ONE);
+	V4(115200, DataBits.EIGHT, Parity.NONE, StopBits.ONE);
 
 	SmartMeterPortSettings(final int baudRate, final DataBits db, final Parity p, final StopBits b) {
 		this.baudRate = baudRate;

@@ -1,14 +1,13 @@
 package nl.bakkerv.p1.parser;
 
 import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.HashMap;
 import java.util.Map;
 
+import nl.bakkerv.p1.testutil.TestObjectFactory;
 import org.junit.Before;
 import org.junit.Test;
-
-import com.google.common.collect.Maps;
-
-import nl.bakkerv.p1.testutil.TestObjectFactory;
 
 public class DatagramCleanerTest {
 
@@ -46,7 +45,7 @@ public class DatagramCleanerTest {
 		0-1:24.4.0(1)
 		 */
 		Map<String, String> actual = this.cleanerUnderTest.splitDiagram(TestObjectFactory.getTestV3Datagram());
-		Map<String, String> expected = Maps.newHashMap();
+		Map<String, String> expected = new HashMap<>();
 		expected.put("0-0:96.1.1", "(31333631363433322020202020202020)");
 		expected.put("1-0:1.8.1", "(00038.113*kWh)");
 		expected.put("1-0:1.8.2", "(00026.006*kWh)");

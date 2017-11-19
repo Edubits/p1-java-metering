@@ -1,7 +1,8 @@
 package nl.bakkerv.p1.configuration;
 
+import java.util.StringJoiner;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.MoreObjects;
 
 public class SmartMeterDeviceConfiguration {
 
@@ -28,9 +29,10 @@ public class SmartMeterDeviceConfiguration {
 
 	@Override
 	public String toString() {
-		return MoreObjects.toStringHelper(this).add("portName", this.portName)
-				.add("timeout", this.portTimeOut)
-				.add("smartMeterPortSettings", this.smartMeterPortSettings)
+		return new StringJoiner(", ", this.getClass().getSimpleName() + "[", "]")
+				.add("portName: " + this.portName)
+				.add("timeout: " + this.portTimeOut)
+				.add("smartMeterPortSettings: " + this.smartMeterPortSettings)
 				.toString();
 	}
 
